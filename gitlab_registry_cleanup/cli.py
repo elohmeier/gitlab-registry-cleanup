@@ -34,7 +34,7 @@ class CredentialsReadError(Exception):
 def has_terminal_color() -> bool:
     try:
         return os.isatty(sys.stderr.fileno()) and int(subprocess.check_output(['tput', 'colors'])) >= 8
-    except subprocess.CalledProcessError:
+    except (subprocess.CalledProcessError, FileNotFoundError):
         return False
 
 
@@ -159,7 +159,7 @@ def cleanup_gitlab_registry(
     gitlab_base_url = 'https://{}/'.format(gitlab_server)
     registry_base_url = 'https://{}/'.format(registry_server)
 
-    def console_output(repository: str, image_hash: str, successful: bool) -> None:
+    def console_output(repository: str, image_hash: str, successful: bool, error_message: str) -> None:
         if not dry_run:
             if successful:
                 print(
@@ -170,9 +170,9 @@ def cleanup_gitlab_registry(
                 )
             else:
                 print(
-                    'Could not delete image {}{}{} in repository {}{}{}.'.format(
+                    'Could not delete image {}{}{} in repository {}{}{}: {}'.format(
                         TerminalColorCodes.BLUE, image_hash, TerminalColorCodes.RESET, TerminalColorCodes.CYAN,
-                        repository, TerminalColorCodes.RESET
+                        repository, TerminalColorCodes.RESET, error_message
                     )
                 )
         else:
@@ -185,9 +185,10 @@ def cleanup_gitlab_registry(
                 )
             else:
                 print(
-                    'Would delete image {}{}{} in repository {}{}{} {}but without success{}.'.format(
+                    'Would delete image {}{}{} in repository {}{}{} {}but without success{}: {}'.format(
                         TerminalColorCodes.BLUE, image_hash, TerminalColorCodes.RESET, TerminalColorCodes.CYAN,
-                        repository, TerminalColorCodes.RESET, TerminalColorCodes.RED, TerminalColorCodes.RESET
+                        repository, TerminalColorCodes.RESET, TerminalColorCodes.RED, TerminalColorCodes.RESET,
+                        error_message
                     )
                 )
 

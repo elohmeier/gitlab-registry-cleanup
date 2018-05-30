@@ -10,7 +10,7 @@ def soft_delete_untagged_imagehashes(
     admin_auth_token: str,
     local_registry_root: str = DEFAULT_REGISTRY_ROOT,
     dry_run: bool = False,
-    notify_callback: Optional[Callable[[str, str, bool], None]] = None
+    notify_callback: Optional[Callable[[str, str, bool, str], None]] = None
 ) -> None:
     local_registry = LocalRegistry(local_registry_root)
     gitlab_registry = GitLabRegistry(gitlab_url, registry_url, admin_username, admin_auth_token)
@@ -22,7 +22,8 @@ def soft_delete_untagged_imagehashes(
                 if not dry_run:
                     gitlab_registry.delete_image(repository, untagged_imagehash)
                 successful = True
-            except (AuthTokenError, ImageDeleteError):
+            except (AuthTokenError, ImageDeleteError) as ex:
                 successful = False
+                error_message = str(ex)
             if notify_callback is not None:
-                notify_callback(repository, untagged_imagehash, successful)
+                notify_callback(repository, untagged_imagehash, successful, error_message)
